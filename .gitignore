@@ -6,8 +6,6 @@
 *.tfstate.*
 
 # .tfvars .terraform & plan files
-*.tfvars*
-*.terraform.tfvars*
 *.plan
 *.terraform
 
