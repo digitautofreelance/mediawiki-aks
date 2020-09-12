@@ -1,9 +1,9 @@
 variable "location" {}
 
-variable "client_id" {
+variable "serviceprinciple_id" {
 }
 
-variable "client_secret" {
+variable "serviceprinciple_key" {
 }
 
 variable "admin_username" {

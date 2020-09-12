@@ -1,8 +1,3 @@
-provider "azurerm" {
-    version = "~>2.0"
-    features {}
-}
-
 resource "azurerm_resource_group" "aks-learning" {
     name ="aks-learning"
     location = var.location
@@ -25,8 +20,8 @@ resource "azurerm_kubernetes_cluster" "aks-learning-cka" {
     }
 # Providing service principal account to interact with AKS
    service_principal {
-       client_id = var.client_id
-       client_secret = var.client_secret
+       client_id = var.serviceprinciple_id
+       client_secret = var.serviceprinciple_key
    }
 # Adding the linux profile to access the nodes from the node pool
    linux_profile {
@@ -59,4 +54,3 @@ resource "azurerm_kubernetes_cluster" "aks-learning-cka" {
        }
    }
 }
-
