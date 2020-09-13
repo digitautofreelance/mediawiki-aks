@@ -5,10 +5,13 @@ pipeline {
         string(name:"SERVICE_PRINCIPAL_SECRET", defaultValue: " ", description:"Give the service SERVICE_PRINCIPAL_SECRET")
         string(name:"TENTANT_ID", defaultValue: " ", description:"Give the service TENTANT ID")
         string(name:"SUBSCRIPTION", defaultValue: " ", description:"Give the SUBSCRIPTION ID")
+        string(name:"Repo_URL", defaultValue: "https://marketplace.azurecr.io/helm/v1/repo", description:"Provide Helm Repo to ADD")
+        string(name:"Helm_Package_Install", defaultValue: "azure-marketplace/mediawiki", description:"Helm install package")
         booleanParam(name: "Terraform_Plan", defaultValue: true, description: "Dry run the plan")
         booleanParam(name: "AKS_Deployment", defaultValue: false, description: "Are you ready with AKS deployment, if yes please checking")
         booleanParam(name: "AKS_Deployment_Validation", defaultValue: false, description: "Validating the AKS deployment")
-        booleanParam(name: "Mediawiki_Deployment", defaultValue: false, description: "Are you ready with Mediawiki deployment, if yes please checkin")
+        booleanParam(name: "Mediawiki_Deployment", defaultValue: false, description: "Are you ready with Mediawiki deployment, if yes please checking")
+        booleanParam(name: "Mediawiki_Deployment_Validation", defaultValue: false, description: "Are you ready with Mediawiki deployment, if yes please checking")
         booleanParam(name: "Destroy_Deployment", defaultValue: false, description: "Destroy the deployment")
     }
     environment{
@@ -16,10 +19,13 @@ pipeline {
         SERVICE_PRINCIPAL_SECRET = "${params.SERVICE_PRINCIPAL_SECRET}"
         TENTANT_ID = "${params.TENTANT_ID}"
         SUBSCRIPTION = "${params.SUBSCRIPTION}"
+        Repo_URL = "${params.Repo_URL}"
+        Helm_Package_Install = "${params.Helm_Package_Install}"
         Terraform_Plan = "${params.Terraform_Plan}"
         AKS_Deployment = "${params.AKS_Deployment}"
         AKS_Deployment_Validation = "${params.AKS_Deployment_Validation}"
         Mediawiki_Deployment = "${params.Mediawiki_Deployment}"
+        Mediawiki_Deployment_Validation = "${Mediawiki_Deployment_Validation}"
         Destroy_Deployment = "${params.Destroy_Deployment}"
 
     }
@@ -73,12 +79,13 @@ pipeline {
                     }
             }
         }
-        stage('Deployment-Helm-wiki'){
+        stage('App-Deployment-Using-Helm'){
             when { environment name: "Mediawiki_Deployment", value: "true"}
             steps{
                 script{
                     sh '''
-                    echo "checking above stage"
+                    helm repo add azure-marketplace "${Repo_URL}"
+                    helm install my-release "${Helm_Package_Install}"
                     '''
                 }
             }
