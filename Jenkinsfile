@@ -60,7 +60,7 @@ pipeline {
                     sh'''
                     cd AKS-IaC/
                     echo "----------------------------"
-                    terraform apply -var serviceprinciple_id=${SERVICE_PRINCIPAL} -var serviceprinciple_key=${SERVICE_PRINCIPAL_SECRET} -var tenant_id=${TENTANT_ID} -var subscription_id=${SUBSCRIPTION} --auto-approve
+                    terraform apply -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}" --auto-approve
                     '''
                 }
             }
@@ -118,10 +118,12 @@ pipeline {
                 script{
                     sh '''
                     echo "checking destroying the deployment"
-                    terraform destroy -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}"
+                    helm delete my-release
+                    terraform destroy -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}" --auto-approve
                     '''
                 }
             }
         }
     }
 }
+
