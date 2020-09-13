@@ -4,10 +4,12 @@ pipeline {
         string(name:"SERVICE_PRINCIPAL", defaultValue: " ", description:"Give the SERVICE PRINCIPAL ID")
         string(name:"SERVICE_PRINCIPAL_SECRET", defaultValue: " ", description:"Give the service SERVICE_PRINCIPAL_SECRET")
         string(name:"TENTANT_ID", defaultValue: " ", description:"Give the service TENTANT ID")
-        string(name:"SUBSCRIPTION", defaultValue: " ", description:"Give the SUBSCRIPTION")
+        string(name:"SUBSCRIPTION", defaultValue: " ", description:"Give the SUBSCRIPTION ID")
         booleanParam(name: "Terraform_Plan", defaultValue: true, description: "Dry run the plan")
-        booleanParam(name: "AKS_Deployment", defaultValue: false, description: "Are you ready with AKS deployment, if yes please checkin")
+        booleanParam(name: "AKS_Deployment", defaultValue: false, description: "Are you ready with AKS deployment, if yes please checking")
+        booleanParam(name: "AKS_Deployment_Validation", defaultValue: false, description: "Validating the AKS deployment")
         booleanParam(name: "Mediawiki_Deployment", defaultValue: false, description: "Are you ready with Mediawiki deployment, if yes please checkin")
+        booleanParam(name: "Destroy_Deployment", defaultValue: false, description: "Destroy the deployment")
     }
     environment{
         SERVICE_PRINCIPAL = "${params.SERVICE_PRINCIPAL}"
@@ -16,7 +18,9 @@ pipeline {
         SUBSCRIPTION = "${params.SUBSCRIPTION}"
         Terraform_Plan = "${params.Terraform_Plan}"
         AKS_Deployment = "${params.AKS_Deployment}"
+        AKS_Deployment_Validation = "${params.AKS_Deployment_Validation}"
         Mediawiki_Deployment = "${params.Mediawiki_Deployment}"
+        Destroy_Deployment = "${params.Destroy_Deployment}"
 
     }
     stages {
@@ -38,9 +42,7 @@ pipeline {
                 script{
                     sh'''
                     cd AKS-IaC/
-                    echo "----------------------------"
-                    rm -rf *.plan
-                    terraform plan -var serviceprinciple_id=${SERVICE_PRINCIPAL} -var serviceprinciple_key=${SERVICE_PRINCIPAL_SECRET} -var tenant_id=${TENTANT_ID} -var subscription_id=${SUBSCRIPTION} -out mediawiki.plan
+                    terraform plan -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}"
                     '''
                 }
             }
@@ -52,13 +54,13 @@ pipeline {
                     sh'''
                     cd AKS-IaC/
                     echo "----------------------------"
-                    terraform apply "mediawiki.plan" -var serviceprinciple_id=${SERVICE_PRINCIPAL} -var serviceprinciple_key=${SERVICE_PRINCIPAL_SECRET} -var tenant_id=${TENTANT_ID} -var subscription_id=${SUBSCRIPTION} --auto-approve
+                    terraform apply -var serviceprinciple_id=${SERVICE_PRINCIPAL} -var serviceprinciple_key=${SERVICE_PRINCIPAL_SECRET} -var tenant_id=${TENTANT_ID} -var subscription_id=${SUBSCRIPTION} --auto-approve
                     '''
                 }
             }
         }
         stage('Validating the AKS cluster'){
-            when { environment name: "AKS_Deployment", value: "true"}
+            when { environment name: "AKS_Deployment_Validation", value: "true"}
             steps{
                 script{
                         sh '''
@@ -75,6 +77,17 @@ pipeline {
                 script{
                     sh '''
                     echo "checking above stage"
+                    '''
+                }
+            }
+        }
+        stage('Destory AKS Deployment'){
+            when { environment name: "Destroy_Deployment", value: "true"}
+            steps{
+                script{
+                    sh '''
+                    echo "checking destroying the deployment"
+                    terraform destroy -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}"
                     '''
                 }
             }
