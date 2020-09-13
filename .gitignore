@@ -10,8 +10,6 @@
 *.terraform
 
 #ssh key 
-*ssh-key
-*key
 *.git
 
 
