@@ -64,7 +64,9 @@ pipeline {
             steps{
                 script{
                         sh '''
-                        az aks get credentials
+                        AKS_RG=`az group list | grep -i "aks" | grep "name" | head -1 | awk '{print $2}' | sed 's/"//g' | sed 's/,//g'`
+                        AKS_NAME=`az aks list | grep $AKS_RG | grep "name" | awk '{print $2}' | sed 's/"//g' | sed 's/,//g'`
+                        az aks get-credentials --resource-group $AKS_RG --name $AKS_NAME
                         kubectl get nodes -o wide
                         kubectl get svc 
                         '''
