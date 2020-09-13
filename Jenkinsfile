@@ -86,6 +86,25 @@ pipeline {
                     sh '''
                     helm repo add azure-marketplace "${Repo_URL}"
                     helm install my-release "${Helm_Package_Install}"
+                    echo "Updating the application by configuring the DB credentials"
+                    export APP_HOST=$(kubectl get svc --namespace default my-release-mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
+                    export APP_PASSWORD=$(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
+                    export APP_DATABASE_PASSWORD=$(kubectl get secret --namespace default my-release-mariadb -o jsonpath="{.data.mariadb-password}" | base64 --decode)
+                    '''
+                }
+            }
+        }
+        stage('Helm-Deployment-Validation'){
+            when { environment name: "Mediawiki_Deployment_Validation", value: "true"}
+            steps{
+                script{
+                    sh '''
+                    echo "Updating the application by configuring the DB credentials"
+                    export APP_HOST=$(kubectl get svc --namespace default my-release-mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
+                    export APP_PASSWORD=$(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
+                    export APP_DATABASE_PASSWORD=$(kubectl get secret --namespace default my-release-mariadb -o jsonpath="{.data.mariadb-password}" | base64 --decode)
+                    helm upgrade my-release bitnami/mediawiki --set mediawikiHost=$APP_HOST,mediawikiPassword=$APP_PASSWORD,mariadb.db.password=$APP_DATABASE_PASSWORD
+                    $(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
                     '''
                 }
             }
