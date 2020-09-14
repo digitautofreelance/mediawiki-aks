@@ -85,7 +85,7 @@ pipeline {
                 script{
                     sh '''
                     helm repo add azure-marketplace "${Repo_URL}"
-                    helm install my-release -f values.yaml "${Helm_Package_Install}"
+                    helm install my-release "${Helm_Package_Install}"
                     echo "Updating the application by configuring the DB credentials"
                     export APP_HOST=$(kubectl get svc --namespace default my-release-mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
                     export APP_PASSWORD=$(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
