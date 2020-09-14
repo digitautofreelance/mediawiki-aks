@@ -85,7 +85,7 @@ pipeline {
                 script{
                     sh '''
                     helm repo add azure-marketplace "${Repo_URL}"
-                    helm install my-release "${Helm_Package_Install}"
+                    helm install my-release -f values.yaml "${Helm_Package_Install}"
                     echo "Updating the application by configuring the DB credentials"
                     export APP_HOST=$(kubectl get svc --namespace default my-release-mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
                     export APP_PASSWORD=$(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
@@ -119,6 +119,7 @@ pipeline {
                     sh '''
                     echo "checking destroying the deployment"
                     helm delete my-release
+                    kubectl delete pvc/$(kubectl get pvc | tail -1 | awk '{print $1}')
                     terraform destroy -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}" --auto-approve
                     '''
                 }
