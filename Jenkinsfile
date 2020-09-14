@@ -108,6 +108,8 @@ pipeline {
                     export APP_DATABASE_PASSWORD=$(kubectl get secret --namespace default my-release-mariadb -o jsonpath="{.data.mariadb-password}" | base64 --decode)
                     helm upgrade my-release bitnami/mediawiki --set mediawikiHost=$APP_HOST,mediawikiPassword=$APP_PASSWORD,mariadb.db.password=$APP_DATABASE_PASSWORD
                     $(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
+                    export SERVICE_IP=$(kubectl get svc --namespace default my-release-mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
+                    echo "Mediawiki URL: http://$SERVICE_IP/"
                     '''
                 }
             }
@@ -120,11 +122,12 @@ pipeline {
                     echo "checking destroying the deployment"
                     helm delete my-release
                     kubectl delete pvc/$(kubectl get pvc | tail -1 | awk '{print $1}')
+                    cd AKS_IaC/
                     terraform destroy -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}" --auto-approve
+                    rm -rf /var/jenkins_home/.kube
                     '''
                 }
             }
         }
     }
 }
-
