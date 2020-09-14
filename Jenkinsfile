@@ -114,7 +114,7 @@ pipeline {
                 }
             }
         }
-        stage('Destory AKS Deployment'){
+         stage('Destory Helm Deployment'){
             when { environment name: "Destroy_Deployment", value: "true"}
             steps{
                 script{
@@ -122,7 +122,17 @@ pipeline {
                     echo "checking destroying the deployment"
                     helm delete my-release
                     kubectl delete pvc/$(kubectl get pvc | tail -1 | awk '{print $1}')
-                    cd AKS_IaC/
+                    '''
+                }
+            }
+        }
+        stage('Destory AKS Deployment'){
+            when { environment name: "Destroy_Deployment", value: "true"}
+            steps{
+                script{
+                    sh '''
+                    echo "checking destroying the deployment"
+                    cd AKS-IaC/
                     terraform destroy -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}" --auto-approve
                     rm -rf /var/jenkins_home/.kube
                     '''
