@@ -30,25 +30,27 @@ pipeline {
 
     }
     stages {
-        stage('intialising terraform'){
-            when { environment name: "Terraform_Plan", value: "true"}
+        stage('Creating creds-file'){
             steps{
                 script{
                     sh '''
-                    echo "Initilasing the terraform init to deploy AKS"
-                    cd AKS-IaC/
-                    terraform init
+                    cd AKS-IaC/ 
+                    rm -rf .creds.tfvars
+                    echo "serviceprinciple_id = '${SERVICE_PRINCIPAL}'" > .creds.tfvars
+                    echo "serviceprinciple_key = '${SERVICE_PRINCIPAL_SECRET}'" >> .creds.tfvars 
+                    echo "subscription_id = '${SUBSCRIPTION}'" >> .creds.tfvars 
+                    echo "tenant_id = '${TENTANT_ID}'" >> .creds.tfvars 
+                    ls -la
                     '''
                 }
-            }
+            } 
         }
         stage('Plan-AKS-cluster'){
             when { environment name: "Terraform_Plan", value: "true"}
             steps{
                 script{
                     sh'''
-                    cd AKS-IaC/
-                    terraform plan -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}"
+                    make clean && make validate && make plan
                     '''
                 }
             }
@@ -58,9 +60,7 @@ pipeline {
             steps{
                 script{
                     sh'''
-                    cd AKS-IaC/
-                    echo "----------------------------"
-                    terraform apply -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}" --auto-approve
+                    make infra-apply
                     '''
                 }
             }
@@ -132,8 +132,7 @@ pipeline {
                 script{
                     sh '''
                     echo "checking destroying the deployment"
-                    cd AKS-IaC/
-                    terraform destroy -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}" --auto-approve
+                    make destroy
                     rm -rf /var/jenkins_home/.kube
                     '''
                 }
