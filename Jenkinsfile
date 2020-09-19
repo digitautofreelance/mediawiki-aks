@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    options{
+        buildDiscarder(logRotator(numToKeepStr:'10'))
+    }
     parameters{
         string(name:"SERVICE_PRINCIPAL", defaultValue: " ", description:"Give the SERVICE PRINCIPAL ID")
         string(name:"SERVICE_PRINCIPAL_SECRET", defaultValue: " ", description:"Give the service SERVICE_PRINCIPAL_SECRET")
