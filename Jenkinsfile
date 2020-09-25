@@ -28,7 +28,7 @@ pipeline {
         AKS_Deployment = "${params.AKS_Deployment}"
         AKS_Deployment_Validation = "${params.AKS_Deployment_Validation}"
         Mediawiki_Deployment = "${params.Mediawiki_Deployment}"
-        Mediawiki_Deployment_Validation = "${Mediawiki_Deployment_Validation}"
+        Mediawiki_Deployment_Validation = "${params.Mediawiki_Deployment_Validation}"
         Destroy_Deployment = "${params.Destroy_Deployment}"
 
     }
