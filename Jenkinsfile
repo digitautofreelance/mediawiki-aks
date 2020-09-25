@@ -23,12 +23,13 @@ pipeline {
         TENTANT_ID = "${params.TENTANT_ID}"
         SUBSCRIPTION = "${params.SUBSCRIPTION}"
         Repo_URL = "${params.Repo_URL}"
+       // Repo_URL = "${params.Repo_URL}"
         Helm_Package_Install = "${params.Helm_Package_Install}"
         Terraform_Plan = "${params.Terraform_Plan}"
         AKS_Deployment = "${params.AKS_Deployment}"
         AKS_Deployment_Validation = "${params.AKS_Deployment_Validation}"
         Mediawiki_Deployment = "${params.Mediawiki_Deployment}"
-        Mediawiki_Deployment_Validation = "${Mediawiki_Deployment_Validation}"
+        Mediawiki_Deployment_Validation = "${params.Mediawiki_Deployment_Validation}"
         Destroy_Deployment = "${params.Destroy_Deployment}"
 
     }
