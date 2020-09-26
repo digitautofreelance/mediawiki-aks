@@ -1,10 +1,10 @@
 creating-az-cred:
 	cd AKS-IaC/ 
 	rm -rf .creds.tfvars
-	echo serviceprinciple_id="$AZURE_CLIENT_ID" > .creds.tfvars
-	echo serviceprinciple_key="$AZURE_CLIENT_SECRET" >> .creds.tfvars
-	echo tenant_id="$AZURE_TENANT_ID" >> .creds.tfvars
-	echo subscription_id="$AZURE_SUBSCRIPTION_ID" >> .creds.tfvars
+	echo serviceprinciple_id="${AZURE_CLIENT_ID}" > .creds.tfvars
+	echo serviceprinciple_key="${AZURE_CLIENT_SECRET}" >> .creds.tfvars
+	echo tenant_id="${AZURE_TENANT_ID}" >> .creds.tfvars
+	echo subscription_id="${AZURE_SUBSCRIPTION_ID}" >> .creds.tfvars
 clean:
 	# This section is optional, It will delete existing state of terraform
 	cd AKS-IaC/ && rm -rf *.plan *.tfstate && rm -rf .terramform
