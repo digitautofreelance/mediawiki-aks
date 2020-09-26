@@ -105,12 +105,13 @@ pipeline {
                     helm repo update
                     helm repo add azure-marketplace "${Repo_URL}"
                     sleep 2m
-                    echo "Updating the application by configuring the DB credentials"
+                    echo "Retrieving the SVC, mediawiki & DB credentials"
                     APP_HOST=$(kubectl get svc --namespace default my-release-mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
                     APP_PASSWORD=$(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
                     APP_DATABASE_PASSWORD=$(kubectl get secret --namespace default my-release-mariadb -o jsonpath="{.data.mariadb-password}" | base64 --decode)
+                    echo "....Upgarding the application.........."
                     helm upgrade my-release azure-marketplace/mediawiki --set mediawikiHost=$APP_HOST,mediawikiPassword=$APP_PASSWORD,mariadb.db.password=$APP_DATABASE_PASSWORD
-                    $(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
+                    Admin_Passwd=$(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
                     SERVICE_IP=$(kubectl get svc --namespace default my-release-mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
                     echo "Mediawiki URL: http://$SERVICE_IP/"
                     '''
