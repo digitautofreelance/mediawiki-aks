@@ -69,6 +69,7 @@ pipeline {
         stage('Validating the AKS cluster'){
             when { environment name: "AKS_Deployment_Validation", value: "true"}
             steps{
+                withCredentials([azureServicePrincipal('SERVICE_PRINCIPAL')]){
                 script{
                         sh '''
                         az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
@@ -79,6 +80,7 @@ pipeline {
                         kubectl get nodes -o wide
                         kubectl get svc 
                         '''
+                        }
                     }
             }
         }
