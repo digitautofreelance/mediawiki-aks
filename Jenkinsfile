@@ -52,7 +52,10 @@ pipeline {
             steps{
                 script{
                     sh'''
-                    make clean && make validate && make plan
+                    echo "Validating the terrafrom scripts"
+                    make validate 
+                    echo "Dry run using terrafrom plan"
+                    make plan
                     '''
                 }
             }
