@@ -35,10 +35,11 @@ pipeline {
                     sh '''
                     cd AKS-IaC/ 
                     rm -rf .creds.tfvars
-                    echo "serviceprinciple_id=$AZURE_CLIENT_ID" > .creds.tfvars
-                    echo "serviceprinciple_key=$AZURE_CLIENT_SECRET" >> .creds.tfvars
-                    echo "tenant_id=$AZURE_TENANT_ID" >> .creds.tfvars
-                    echo "serviceprinciple_id=$AZURE_CLIENT_ID" >> .creds.tfvars
+                    echo serviceprinciple_id='"'"$AZURE_CLIENT_ID"'"' > .creds.tfvars
+                    echo serviceprinciple_key='"'"$AZURE_CLIENT_SECRET"'"' >> .creds.tfvars
+                    echo tenant_id='"'"$AZURE_TENANT_ID"'"' >> .creds.tfvars
+                    echo subscription_id='"'"$AZURE_SUBSCRIPTION_ID"'"' >> .creds.tfvars
+                    pwd
                     ls -la
                     '''
                     }
