@@ -14,6 +14,7 @@ pipeline {
         booleanParam(name: "Mediawiki_Deployment", defaultValue: false, description: "Are you ready with Mediawiki deployment, if yes please checking")
         booleanParam(name: "Mediawiki_Deployment_Validation", defaultValue: false, description: "Are you ready with Mediawiki deployment, if yes please checking")
         booleanParam(name: "Destroy_Deployment", defaultValue: false, description: "Destroy the deployment")
+        booleanParam(name: "Destroy_Helm_Deployment", defaultValue: false, description: "Destroy the deployment")
     }
     environment{
         Repo_URL = "${params.Repo_URL}"
@@ -23,6 +24,7 @@ pipeline {
         AKS_Deployment_Validation = "${params.AKS_Deployment_Validation}"
         Mediawiki_Deployment = "${params.Mediawiki_Deployment}"
         Mediawiki_Deployment_Validation = "${params.Mediawiki_Deployment_Validation}"
+        Destroy_Helm_Deployment = "${params.Destroy_Helm_Deployment}"
         Destroy_Deployment = "${params.Destroy_Deployment}"
 
     }
@@ -116,7 +118,7 @@ pipeline {
             }
         }
          stage('Destory Helm Deployment'){
-            when { environment name: "Destroy_Deployment", value: "true"}
+            when { environment name: "Destroy_Helm_Deployment", value: "true"}
             steps{
                 script{
                     sh '''
