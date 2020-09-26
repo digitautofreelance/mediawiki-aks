@@ -2,6 +2,8 @@ pipeline {
     agent any
     options{
         buildDiscarder(logRotator(numToKeepStr:'10'))
+        disableConcurrentBuilds()
+        timeout(time: 1, unit: 'Days')
     }
     parameters{
         string(name:"Repo_URL", defaultValue: "https://marketplace.azurecr.io/helm/v1/repo", description:"Provide Helm Repo to ADD")
@@ -69,6 +71,8 @@ pipeline {
             steps{
                 script{
                         sh '''
+                        az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
+                        az account set -s $AZURE_SUBSCRIPTION_ID
                         AKS_RG=`az group list | grep -i "aks" | grep "name" | head -1 | awk '{print $2}' | sed 's/"//g' | sed 's/,//g'`
                         AKS_NAME=`az aks list | grep $AKS_RG | grep "name" | awk '{print $2}' | sed 's/"//g' | sed 's/,//g'`
                         az aks get-credentials --resource-group $AKS_RG --name $AKS_NAME
