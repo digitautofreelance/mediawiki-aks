@@ -3,7 +3,7 @@ pipeline {
     options{
         buildDiscarder(logRotator(numToKeepStr:'10'))
         disableConcurrentBuilds()
-        timeout(time: 1, unit: 'Days')
+       // timeout(time: 1, unit: 'Days')
     }
     parameters{
         string(name:"Repo_URL", defaultValue: "https://marketplace.azurecr.io/helm/v1/repo", description:"Provide Helm Repo to ADD")
