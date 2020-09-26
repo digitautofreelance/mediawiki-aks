@@ -33,9 +33,15 @@ pipeline {
                 withCredentials([azureServicePrincipal('SERVICE_PRINCIPAL')]){
                 script{
                     sh '''
-                    make creating-az-cred
+                    cd AKS-IaC/ 
+                    rm -rf .creds.tfvars
+                    echo serviceprinciple_id='"'"$AZURE_CLIENT_ID"'"' > .creds.tfvars
+                    echo serviceprinciple_key='"'"$AZURE_CLIENT_SECRET"'"' >> .creds.tfvars
+                    echo tenant_id='"'"$AZURE_TENANT_ID"'"' >> .creds.tfvars
+                    echo subscription_id='"'"$AZURE_SUBSCRIPTION_ID"'"' >> .creds.tfvars
                     pwd
                     ls -la
+                    cat .creds.tfvars
                     '''
                     }
                 }
@@ -46,10 +52,7 @@ pipeline {
             steps{
                 script{
                     sh'''
-                    echo "Validating the terrafrom scripts"
-                    make validate 
-                    echo "Dry run using terrafrom plan"
-                    make plan
+                    make clean && make validate && make plan
                     '''
                 }
             }
