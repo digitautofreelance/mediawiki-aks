@@ -4,10 +4,6 @@ pipeline {
         buildDiscarder(logRotator(numToKeepStr:'10'))
     }
     parameters{
-        string(name:"SERVICE_PRINCIPAL", defaultValue: " ", description:"Give the SERVICE PRINCIPAL ID")
-        string(name:"SERVICE_PRINCIPAL_SECRET", defaultValue: " ", description:"Give the service SERVICE_PRINCIPAL_SECRET")
-        string(name:"TENTANT_ID", defaultValue: " ", description:"Give the service TENTANT ID")
-        string(name:"SUBSCRIPTION", defaultValue: " ", description:"Give the SUBSCRIPTION ID")
         string(name:"Repo_URL", defaultValue: "https://marketplace.azurecr.io/helm/v1/repo", description:"Provide Helm Repo to ADD")
         string(name:"Helm_Package_Install", defaultValue: "azure-marketplace/mediawiki", description:"Helm install package")
         booleanParam(name: "Terraform_Plan", defaultValue: true, description: "Dry run the plan")
@@ -18,10 +14,6 @@ pipeline {
         booleanParam(name: "Destroy_Deployment", defaultValue: false, description: "Destroy the deployment")
     }
     environment{
-        SERVICE_PRINCIPAL = "${params.SERVICE_PRINCIPAL}"
-        SERVICE_PRINCIPAL_SECRET = "${params.SERVICE_PRINCIPAL_SECRET}"
-        TENTANT_ID = "${params.TENTANT_ID}"
-        SUBSCRIPTION = "${params.SUBSCRIPTION}"
         Repo_URL = "${params.Repo_URL}"
         Helm_Package_Install = "${params.Helm_Package_Install}"
         Terraform_Plan = "${params.Terraform_Plan}"
@@ -48,23 +40,28 @@ pipeline {
         stage('Plan-AKS-cluster'){
             when { environment name: "Terraform_Plan", value: "true"}
             steps{
+            withCredentials([azureServicePrincipal('SERVICE_PRINCIPAL')]){
                 script{
                     sh'''
                     cd AKS-IaC/
-                    terraform plan -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}"
+                    $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
+                    terraform plan -var serviceprinciple_id="${$AZURE_CLIENT_ID}" -var serviceprinciple_key="${AZURE_CLIENT_SECRET}" -var tenant_id="${AZURE_TENANT_ID}" -var subscription_id="${AZURE_SUBSCRIPTION_ID}"
                     '''
+                 }
                 }
             }
         }
         stage('Deployment-AKS-cluster'){
             when { environment name: "AKS_Deployment", value: "true"}
             steps{
+                withCredentials([azureServicePrincipal('SERVICE_PRINCIPAL')]){
                 script{
                     sh'''
                     cd AKS-IaC/
                     echo "----------------------------"
-                    terraform apply -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}" --auto-approve
+                    terraform apply  -var serviceprinciple_id="${$AZURE_CLIENT_ID}" -var serviceprinciple_key="${AZURE_CLIENT_SECRET}" -var tenant_id="${AZURE_TENANT_ID}" -var subscription_id="${AZURE_SUBSCRIPTION_ID}" --auto-approve
                     '''
+                 }
                 }
             }
         }
@@ -132,7 +129,7 @@ pipeline {
                     sh '''
                     echo "checking destroying the deployment"
                     cd AKS-IaC/
-                    terraform destroy -var serviceprinciple_id="${SERVICE_PRINCIPAL}" -var serviceprinciple_key="${SERVICE_PRINCIPAL_SECRET}" -var tenant_id="${TENTANT_ID}" -var subscription_id="${SUBSCRIPTION}" --auto-approve
+                    terraform destroy -var serviceprinciple_id="${$AZURE_CLIENT_ID}" -var serviceprinciple_key="${AZURE_CLIENT_SECRET}" -var tenant_id="${AZURE_TENANT_ID}" -var subscription_id="${AZURE_SUBSCRIPTION_ID}" --auto-approve
                     rm -rf /var/jenkins_home/.kube
                     '''
                 }
