@@ -30,6 +30,7 @@ pipeline {
     stages {
         stage('Creating creds-file'){
             steps{
+                withCredentials([azureServicePrincipal('SERVICE_PRINCIPAL')]){
                 script{
                     sh '''
                     cd AKS-IaC/ 
@@ -40,6 +41,7 @@ pipeline {
                     echo "serviceprinciple_id=$AZURE_CLIENT_ID" >> .creds.tfvars
                     ls -la
                     '''
+                    }
                 }
             } 
         }
@@ -54,7 +56,7 @@ pipeline {
             }
         }
         stage('Deployment-AKS-cluster'){
-            when { environment name: "AKS_Deployment", value: "true"}
+             when { environment name: "AKS_Deployment", value: "true"}
             steps{
                 script{
                     sh'''
@@ -66,15 +68,19 @@ pipeline {
         stage('Validating the AKS cluster'){
             when { environment name: "AKS_Deployment_Validation", value: "true"}
             steps{
+                withCredentials([azureServicePrincipal('SERVICE_PRINCIPAL')]){
                 script{
                         sh '''
+                        az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
+                        az account set -s $AZURE_SUBSCRIPTION_ID
                         AKS_RG=`az group list | grep -i "aks" | grep "name" | head -1 | awk '{print $2}' | sed 's/"//g' | sed 's/,//g'`
                         AKS_NAME=`az aks list | grep $AKS_RG | grep "name" | awk '{print $2}' | sed 's/"//g' | sed 's/,//g'`
                         az aks get-credentials --resource-group $AKS_RG --name $AKS_NAME
                         kubectl get nodes -o wide
                         kubectl get svc 
                         '''
-                    }
+                        }
+                }
             }
         }
         stage('App-Deployment-Using-Helm'){
@@ -84,10 +90,6 @@ pipeline {
                     sh '''
                     helm repo add azure-marketplace "${Repo_URL}"
                     helm install my-release "${Helm_Package_Install}"
-                    echo "Updating the application by configuring the DB credentials"
-                    export APP_HOST=$(kubectl get svc --namespace default my-release-mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
-                    export APP_PASSWORD=$(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
-                    export APP_DATABASE_PASSWORD=$(kubectl get secret --namespace default my-release-mariadb -o jsonpath="{.data.mariadb-password}" | base64 --decode)
                     '''
                 }
             }
@@ -100,20 +102,21 @@ pipeline {
                     helm repo update
                     helm repo add azure-marketplace "${Repo_URL}"
                     sleep 2m
-                    echo "Updating the application by configuring the DB credentials"
-                    export APP_HOST=$(kubectl get svc --namespace default my-release-mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
-                    export APP_PASSWORD=$(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
-                    export APP_DATABASE_PASSWORD=$(kubectl get secret --namespace default my-release-mariadb -o jsonpath="{.data.mariadb-password}" | base64 --decode)
-                    helm upgrade my-release bitnami/mediawiki --set mediawikiHost=$APP_HOST,mediawikiPassword=$APP_PASSWORD,mariadb.db.password=$APP_DATABASE_PASSWORD
-                    $(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
-                    export SERVICE_IP=$(kubectl get svc --namespace default my-release-mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
+                    echo "Retrieving the SVC, mediawiki & DB credentials"
+                    APP_HOST=$(kubectl get svc --namespace default my-release-mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}")
+                    APP_PASSWORD=$(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
+                    APP_DATABASE_PASSWORD=$(kubectl get secret --namespace default my-release-mariadb -o jsonpath="{.data.mariadb-password}" | base64 --decode)
+                    echo "....Upgarding the application.........."
+                    helm upgrade my-release azure-marketplace/mediawiki --set mediawikiHost=$APP_HOST,mediawikiPassword=$APP_PASSWORD,mariadb.db.password=$APP_DATABASE_PASSWORD
+                    Admin_Passwd=$(kubectl get secret --namespace default my-release-mediawiki -o jsonpath="{.data.mediawiki-password}" | base64 --decode)
+                    SERVICE_IP=$(kubectl get svc --namespace default my-release-mediawiki --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
                     echo "Mediawiki URL: http://$SERVICE_IP/"
                     '''
                 }
             }
         }
          stage('Destory Helm Deployment'){
-            when { environment name: "Destroy_Deployment", value: "true"}
+            when { environment name: "Destroy_Helm_Deployment", value: "true"}
             steps{
                 script{
                     sh '''
@@ -125,14 +128,17 @@ pipeline {
             }
         }
         stage('Destory AKS Deployment'){
-            when { environment name: "Destroy_Deployment", value: "true"}
+            when { environment name: "Destroy_AKS_Deployment", value: "true"}
             steps{
+                withCredentials([azureServicePrincipal('SERVICE_PRINCIPAL')]){
                 script{
                     sh '''
                     echo "checking destroying the deployment"
-                    make destroy
+                    cd AKS-IaC/
+                    terraform destroy -var serviceprinciple_id=$AZURE_CLIENT_ID -var serviceprinciple_key=$AZURE_CLIENT_SECRET -var tenant_id=$AZURE_TENANT_ID -var subscription_id=$AZURE_SUBSCRIPTION_ID --auto-approve
                     rm -rf /var/jenkins_home/.kube
                     '''
+                    }
                 }
             }
         }
