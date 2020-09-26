@@ -40,14 +40,13 @@ pipeline {
         stage('Plan-AKS-cluster'){
             when { environment name: "Terraform_Plan", value: "true"}
             steps{
-            withCredentials([azureServicePrincipal('SERVICE_PRINCIPAL')]){
+                withCredentials([azureServicePrincipal('SERVICE_PRINCIPAL')]){
                 script{
                     sh'''
                     cd AKS-IaC/
-                    $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET -t $AZURE_TENANT_ID
-                    terraform plan -var serviceprinciple_id="${$AZURE_CLIENT_ID}" -var serviceprinciple_key="${AZURE_CLIENT_SECRET}" -var tenant_id="${AZURE_TENANT_ID}" -var subscription_id="${AZURE_SUBSCRIPTION_ID}"
+                    terraform plan -var serviceprinciple_id=$AZURE_CLIENT_ID -var serviceprinciple_key=$AZURE_CLIENT_SECRET -var tenant_id=$AZURE_TENANT_ID -var subscription_id=$AZURE_SUBSCRIPTION_ID
                     '''
-                 }
+                    }
                 }
             }
         }
@@ -59,9 +58,9 @@ pipeline {
                     sh'''
                     cd AKS-IaC/
                     echo "----------------------------"
-                    terraform apply  -var serviceprinciple_id="${$AZURE_CLIENT_ID}" -var serviceprinciple_key="${AZURE_CLIENT_SECRET}" -var tenant_id="${AZURE_TENANT_ID}" -var subscription_id="${AZURE_SUBSCRIPTION_ID}" --auto-approve
+                    terraform apply -var serviceprinciple_id=$AZURE_CLIENT_ID -var serviceprinciple_key=$AZURE_CLIENT_SECRET -var tenant_id=$AZURE_TENANT_ID -var subscription_id=$AZURE_SUBSCRIPTION_ID --auto-approve
                     '''
-                 }
+                    }
                 }
             }
         }
@@ -125,13 +124,15 @@ pipeline {
         stage('Destory AKS Deployment'){
             when { environment name: "Destroy_Deployment", value: "true"}
             steps{
+                withCredentials([azureServicePrincipal('SERVICE_PRINCIPAL')]){
                 script{
                     sh '''
                     echo "checking destroying the deployment"
                     cd AKS-IaC/
-                    terraform destroy -var serviceprinciple_id="${$AZURE_CLIENT_ID}" -var serviceprinciple_key="${AZURE_CLIENT_SECRET}" -var tenant_id="${AZURE_TENANT_ID}" -var subscription_id="${AZURE_SUBSCRIPTION_ID}" --auto-approve
+                    terraform destroy -var serviceprinciple_id=$AZURE_CLIENT_ID -var serviceprinciple_key=$AZURE_CLIENT_SECRET -var tenant_id=$AZURE_TENANT_ID -var subscription_id=$AZURE_SUBSCRIPTION_ID --auto-approve
                     rm -rf /var/jenkins_home/.kube
                     '''
+                    }
                 }
             }
         }
