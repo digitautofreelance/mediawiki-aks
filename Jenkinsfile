@@ -13,8 +13,8 @@ pipeline {
         booleanParam(name: "AKS_Deployment_Validation", defaultValue: false, description: "Validating the AKS deployment")
         booleanParam(name: "Mediawiki_Deployment", defaultValue: false, description: "Are you ready with Mediawiki deployment, if yes please checking")
         booleanParam(name: "Mediawiki_Deployment_Validation", defaultValue: false, description: "Are you ready with Mediawiki deployment, if yes please checking")
-        booleanParam(name: "Destroy_Deployment", defaultValue: false, description: "Destroy the deployment")
-        booleanParam(name: "Destroy_Helm_Deployment", defaultValue: false, description: "Destroy the deployment")
+        booleanParam(name: "Destroy_Helm_Deployment", defaultValue: false, description: "Destroy the Helm - Application deployment")
+        booleanParam(name: "Destroy_AKS_Deployment", defaultValue: false, description: "Destroy the AKS deployment")
     }
     environment{
         Repo_URL = "${params.Repo_URL}"
@@ -25,7 +25,7 @@ pipeline {
         Mediawiki_Deployment = "${params.Mediawiki_Deployment}"
         Mediawiki_Deployment_Validation = "${params.Mediawiki_Deployment_Validation}"
         Destroy_Helm_Deployment = "${params.Destroy_Helm_Deployment}"
-        Destroy_Deployment = "${params.Destroy_Deployment}"
+        Destroy_AKS_Deployment = "${params.Destroy_AKS_Deployment}"
 
     }
     stages {
@@ -130,7 +130,7 @@ pipeline {
             }
         }
         stage('Destory AKS Deployment'){
-            when { environment name: "Destroy_Deployment", value: "true"}
+            when { environment name: "Destroy_AKS_Deployment", value: "true"}
             steps{
                 withCredentials([azureServicePrincipal('SERVICE_PRINCIPAL')]){
                 script{
