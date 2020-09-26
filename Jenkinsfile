@@ -2,12 +2,10 @@ pipeline {
     agent any
     options{
         buildDiscarder(logRotator(numToKeepStr:'10'))
+        disableConcurrentBuilds()
+       // timeout(time: 1, unit: 'Days')
     }
     parameters{
-        string(name:"SERVICE_PRINCIPAL", defaultValue: " ", description:"Give the SERVICE PRINCIPAL ID")
-        string(name:"SERVICE_PRINCIPAL_SECRET", defaultValue: " ", description:"Give the service SERVICE_PRINCIPAL_SECRET")
-        string(name:"TENTANT_ID", defaultValue: " ", description:"Give the service TENTANT ID")
-        string(name:"SUBSCRIPTION", defaultValue: " ", description:"Give the SUBSCRIPTION ID")
         string(name:"Repo_URL", defaultValue: "https://marketplace.azurecr.io/helm/v1/repo", description:"Provide Helm Repo to ADD")
         string(name:"Helm_Package_Install", defaultValue: "azure-marketplace/mediawiki", description:"Helm install package")
         booleanParam(name: "Terraform_Plan", defaultValue: true, description: "Dry run the plan")
@@ -15,24 +13,20 @@ pipeline {
         booleanParam(name: "AKS_Deployment_Validation", defaultValue: false, description: "Validating the AKS deployment")
         booleanParam(name: "Mediawiki_Deployment", defaultValue: false, description: "Are you ready with Mediawiki deployment, if yes please checking")
         booleanParam(name: "Mediawiki_Deployment_Validation", defaultValue: false, description: "Are you ready with Mediawiki deployment, if yes please checking")
-        booleanParam(name: "Destroy_Deployment", defaultValue: false, description: "Destroy the deployment")
+        booleanParam(name: "Destroy_Helm_Deployment", defaultValue: false, description: "Destroy the Helm - Application deployment")
+        booleanParam(name: "Destroy_AKS_Deployment", defaultValue: false, description: "Destroy the AKS deployment")
     }
     environment{
-        SERVICE_PRINCIPAL = "${params.SERVICE_PRINCIPAL}"
-        SERVICE_PRINCIPAL_SECRET = "${params.SERVICE_PRINCIPAL_SECRET}"
-        TENTANT_ID = "${params.TENTANT_ID}"
-        SUBSCRIPTION = "${params.SUBSCRIPTION}"
         Repo_URL = "${params.Repo_URL}"
-       // Repo_URL = "${params.Repo_URL}"
         Helm_Package_Install = "${params.Helm_Package_Install}"
         Terraform_Plan = "${params.Terraform_Plan}"
         AKS_Deployment = "${params.AKS_Deployment}"
         AKS_Deployment_Validation = "${params.AKS_Deployment_Validation}"
         Mediawiki_Deployment = "${params.Mediawiki_Deployment}"
         Mediawiki_Deployment_Validation = "${params.Mediawiki_Deployment_Validation}"
-        Destroy_Deployment = "${params.Destroy_Deployment}"
-
-    }
+        Destroy_Helm_Deployment = "${params.Destroy_Helm_Deployment}"
+        Destroy_AKS_Deployment = "${params.Destroy_AKS_Deployment}"
+}
     stages {
         stage('Creating creds-file'){
             steps{
@@ -40,10 +34,10 @@ pipeline {
                     sh '''
                     cd AKS-IaC/ 
                     rm -rf .creds.tfvars
-                    echo "serviceprinciple_id = '${SERVICE_PRINCIPAL}'" > .creds.tfvars
-                    echo "serviceprinciple_key = '${SERVICE_PRINCIPAL_SECRET}'" >> .creds.tfvars 
-                    echo "subscription_id = '${SUBSCRIPTION}'" >> .creds.tfvars 
-                    echo "tenant_id = '${TENTANT_ID}'" >> .creds.tfvars 
+                    echo "serviceprinciple_id=$AZURE_CLIENT_ID" > .creds.tfvars
+                    echo "serviceprinciple_key=$AZURE_CLIENT_SECRET" >> .creds.tfvars
+                    echo "tenant_id=$AZURE_TENANT_ID" >> .creds.tfvars
+                    echo "serviceprinciple_id=$AZURE_CLIENT_ID" >> .creds.tfvars
                     ls -la
                     '''
                 }

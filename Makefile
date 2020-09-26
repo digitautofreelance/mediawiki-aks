@@ -1,10 +1,10 @@
 clean:
-	#Cleanup the existing tfstate 
+	#Cleanup the existing tfstate, But this stage optional
 	cd AKS-IaC/ && rm -rf *.plan *.tfstate && rm -rf .terramform
 	
 validate:
 	# Validate the infrastructure 
-	cd AKS-IaC/ && terraform init && terraform validate #-var-file=".creds.tfvars"
+	cd AKS-IaC/ && terraform init && terraform validate
 
 plan:
 	# Creating the terraform plan
